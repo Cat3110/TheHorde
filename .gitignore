@@ -12,6 +12,9 @@
 /[Uu]ser[Ss]ettings/
 *.log
 
+.idea/
+.vscode/
+
 # By default unity supports Blender asset imports, *.blend1 blender files do not need to be commited to version control.
 *.blend1
 *.blend1.meta
@@ -101,3 +104,14 @@ InitTestScene*.unity*
 =======
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
 >>>>>>> 9de42a4 (Initial project setup (Unity 6.2, URP, camera, lighting))
+
+/TheHorde_BurstDebugInformation_DoNotShip/
+/TheHorde_BackUpThisFolder_ButDontShipItWithYourGame/
+/TheHorde/
+/The\ Horde_BurstDebugInformation_DoNotShip/
+
+# Rider временные артефакты сборки
+*.sln
+*.csproj
+*.user
+*.userprefs
