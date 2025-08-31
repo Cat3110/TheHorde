@@ -3,22 +3,25 @@ using UnityEngine;
 
 namespace Utils
 {
-    public class FPSCounter : MonoBehaviour 
+    public class FPSCounter : MonoBehaviour
     {
         public TextMeshProUGUI label;
-        private int _frames;
-        private float _time;
-        
+        private float _deltaTime;
+
         void Update()
-        { 
-            _frames++; 
-            _time += Time.unscaledDeltaTime;
-            if (_time >= 1f)
-            {
-                label.text = $"{Mathf.RoundToInt(_frames/_time)} FPS"; 
-                _frames = 0; 
-                _time = 0; 
-            } 
+        {
+            // Экспоненциальное сглаживание
+            _deltaTime += (Time.unscaledDeltaTime - _deltaTime) * 0.1f;
+
+            float fps = 1f / _deltaTime;
+            float ms = _deltaTime * 1000f;
+
+            label.text = $"{fps:0.} FPS ({ms:0.0} ms)";
+
+            // Цветовая подсветка
+            if (fps >= 55) label.color = Color.green;
+            else if (fps >= 40) label.color = Color.yellow;
+            else label.color = Color.red;
         }
     }
 }
