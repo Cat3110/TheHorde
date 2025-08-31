@@ -6,22 +6,24 @@ namespace Utils
     public class FPSCounter : MonoBehaviour
     {
         public TextMeshProUGUI label;
-        private float _deltaTime;
+
+        private int _ticks;
+        private float _timer;
+
+        void FixedUpdate()
+        {
+            _ticks++;
+        }
 
         void Update()
         {
-            // Экспоненциальное сглаживание
-            _deltaTime += (Time.unscaledDeltaTime - _deltaTime) * 0.1f;
-
-            float fps = 1f / _deltaTime;
-            float ms = _deltaTime * 1000f;
-
-            label.text = $"{fps:0.} FPS ({ms:0.0} ms)";
-
-            // Цветовая подсветка
-            if (fps >= 55) label.color = Color.green;
-            else if (fps >= 40) label.color = Color.yellow;
-            else label.color = Color.red;
+            _timer += Time.unscaledDeltaTime;
+            if (_timer >= 1f)
+            {
+                label.text = $"{_ticks} FixedTicks/s";
+                _ticks = 0;
+                _timer = 0f;
+            }
         }
     }
 }

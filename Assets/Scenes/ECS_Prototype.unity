@@ -119,104 +119,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &326820908
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 326820910}
-  - component: {fileID: 326820909}
-  - component: {fileID: 326820911}
-  - component: {fileID: 326820912}
-  - component: {fileID: 326820913}
-  m_Layer: 0
-  m_Name: SRPBatcherSpawner
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &326820909
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 326820908}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3baed687b45b843b7811c74663fc2aa1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Utils.SrpBatcherSpawner
-  mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
-  material: {fileID: 2100000, guid: 7fbbcf46778a04224a7dd4f611096c9c, type: 2}
-  countX: 25
-  countY: 40
-  spacing: 1.5
---- !u!4 &326820910
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 326820908}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &326820911
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 326820908}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dff452c55e85c4182b1bd7b28bfa7d0d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Tests.ToggleSrpBatcher
-  disableSRPBatcher: 1
---- !u!114 &326820912
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 326820908}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3d1419548e5814d3a885e46f6f24b790, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Tests.RandomMaterialSpawner
-  mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
-  countX: 25
-  countY: 40
-  spacing: 1.5
-  uniqueMaterials: 12
-  disableGPUInstancing: 1
-  litBaseTemplate: {fileID: 2100000, guid: cc6b55b1f5aa649beb4807ddb28808ae, type: 2}
-  litEmissionTemplate: {fileID: 2100000, guid: 56a2e79d3fbb54a8e8ae9fbd14992bf1, type: 2}
-  litAlphaClipTemplate: {fileID: 2100000, guid: 73a4ea274cbc6490f80ba04905646ef1, type: 2}
---- !u!114 &326820913
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 326820908}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9e3220aa2f0c478d9ddec5fb9f4734bd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Tests.SRPBatcherToggleRuntime
 --- !u!1 &667959406
 GameObject:
   m_ObjectHideFlags: 0
@@ -228,9 +130,9 @@ GameObject:
   - component: {fileID: 667959407}
   - component: {fileID: 667959410}
   - component: {fileID: 667959409}
-  - component: {fileID: 667959408}
+  - component: {fileID: 667959411}
   m_Layer: 5
-  m_Name: FPSCounter
+  m_Name: DebugHUD
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -255,19 +157,6 @@ RectTransform:
   m_AnchoredPosition: {x: 200, y: -200}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &667959408
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 667959406}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 222f82e2e65e54039a1764248525da0a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FPSCounter
-  label: {fileID: 667959409}
 --- !u!114 &667959409
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -288,7 +177,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: FPSCounter
+  m_text: DebugHUD
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -367,6 +256,19 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 667959406}
   m_CullTransparentMesh: 1
+--- !u!114 &667959411
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 667959406}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c95512c784014093a3b65f277a96a9d8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Utils.DebugHUD
+  label: {fileID: 667959409}
 --- !u!1 &1530958619
 GameObject:
   m_ObjectHideFlags: 0
@@ -739,5 +641,4 @@ SceneRoots:
   m_Roots:
   - {fileID: 1530958622}
   - {fileID: 2131153891}
-  - {fileID: 326820910}
   - {fileID: 1822442445}
