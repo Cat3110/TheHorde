@@ -4,6 +4,10 @@ namespace Tests
 {
     public class RandomMaterialSpawner : MonoBehaviour
     {
+        private static readonly int BaseColor = Shader.PropertyToID("_BaseColor");
+        private static readonly int EmissionColor = Shader.PropertyToID("_EmissionColor");
+        private static readonly int CutoffID = Shader.PropertyToID("_Cutoff");
+
         [Header("Grid")]
         public Mesh mesh;                 // назначь Cube
         public int countX = 25;
@@ -11,60 +15,57 @@ namespace Tests
         public float spacing = 1.5f;
 
         [Header("Materials")]
-        public int uniqueMaterials = 120;  // 12 матов: 4 обычных, 4 с эмиссией, 4 с клипом
-        public Shader shader;             // назначь "Universal Render Pipeline/Lit" или "Universal Render Pipeline/Unlit"
-        public bool useLit = true;        // для Lit включим разные фичи (emission, alpha clip)
+        [Range(1, 512)] public int uniqueMaterials = 120;
         public bool disableGPUInstancing = true;
 
-        Material[] palette;
+        [Header("Templates (assign in Inspector)")]
+        public Material litBaseTemplate;      // URP/Lit, без опций
+        public Material litEmissionTemplate;  // URP/Lit, Emission ON
+        public Material litAlphaClipTemplate; // URP/Lit, Alpha Clipping ON
+
+        private Material[] _palette;
 
         void Awake()
         {
-            if (shader == null)
+            if (mesh == null)
             {
-                shader = Shader.Find("Universal Render Pipeline/Lit");
-                useLit = true;
+                Debug.LogError("[RandomMaterialSpawner] Mesh не назначен.");
+                enabled = false; return;
+            }
+            if (!litBaseTemplate || !litEmissionTemplate || !litAlphaClipTemplate)
+            {
+                Debug.LogError("[RandomMaterialSpawner] Назначь три шаблонных материала (Base/Emission/AlphaClip) в инспекторе.");
+                enabled = false; return;
             }
 
-            palette = new Material[uniqueMaterials];
+            _palette = new Material[uniqueMaterials];
             for (int i = 0; i < uniqueMaterials; i++)
             {
-                var mat = new Material(shader);
+                // Выбираем шаблон для этого индекса (≈ 1/3 на вариант)
+                int block = Mathf.Max(1, uniqueMaterials / 3);
+                Material template = (i < block) ? litBaseTemplate
+                                   : (i < block * 2) ? litEmissionTemplate
+                                   : litAlphaClipTemplate;
+
+                var mat = new Material(template); // клон варианта, гарантирует наличие нужных keywords в билде
                 if (disableGPUInstancing) mat.enableInstancing = false;
 
-                // Базовый цвет — различаем материалы
-                var hue = (i / (float)uniqueMaterials);
+                // Разные цвета — чтобы получить множество уникальных материалов
+                float hue = i / (float)uniqueMaterials;
                 var color = Color.HSVToRGB(hue, 0.7f, 1f);
 
-                if (useLit)
-                {
-                    // URP/Lit: базовый цвет
-                    mat.SetColor("_BaseColor", color);
+                mat.SetColor(BaseColor, color);
 
-                    // Чередуем варианты шейдера (keywords), чтобы создать разные шейдер-варианты:
-                    // 0..3: базовые; 4..7: Emission; 8..11: Alpha Clipping
-                    if (i >= 4 && i < 8)
-                    {
-                        mat.EnableKeyword("_EMISSION");
-                        mat.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
-                        mat.SetColor("_EmissionColor", color * 1.2f);
-                    }
-                    else if (i >= 8)
-                    {
-                        mat.SetFloat("_AlphaClip", 1f);
-                        mat.EnableKeyword("_ALPHATEST_ON");
-                        // сделаем полупрозрачную базовую текстуру через цвет/альфу (для клипа нужен альфа-канал)
-                        mat.SetFloat("_Surface", 0f); // Opaque, но с клипом
-                        mat.SetFloat("_Cutoff", 0.5f);
-                    }
-                }
-                else
+                if (template == litEmissionTemplate)
                 {
-                    // URP/Unlit
-                    mat.SetColor("_BaseColor", color);
+                    mat.SetColor(EmissionColor, color * 1.2f);
+                }
+                if (template == litAlphaClipTemplate)
+                {
+                    mat.SetFloat(CutoffID, 0.5f);
                 }
 
-                palette[i] = mat;
+                _palette[i] = mat;
             }
         }
 
@@ -84,8 +85,8 @@ namespace Tests
 
                 var mr = go.AddComponent<MeshRenderer>();
                 // случайно распределяем материалы, чтобы чередования ломали естественную сортировку
-                int idx = rnd.Next(palette.Length);
-                mr.sharedMaterial = palette[idx];
+                int idx = rnd.Next(_palette.Length);
+                mr.sharedMaterial = _palette[idx];
             }
         }
     }
