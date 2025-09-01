@@ -14,7 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
   m_GroupName: Default Local Group
   m_GUID: 1294eac5b4fa34608bcc3961d914983a
-  m_SerializeEntries: []
+  m_SerializeEntries:
+  - m_GUID: e612d2916e83243648ef635dc369ae1e
+    m_Address: Assets/Prefabs/Enemies/Zombie.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: b1fc15b148a4044ef9ba42122e8bceac, type: 2}
   m_SchemaSet:

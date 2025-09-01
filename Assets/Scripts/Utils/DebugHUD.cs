@@ -17,6 +17,7 @@ namespace Utils
         private Unity.Entities.EntityManager _em;
         private float _nextRead;
         private ECS.Components.TagCounters _last;
+        private ECS.Components.SpawnDebug _debug;
 
         void Awake()
         {
@@ -29,11 +30,19 @@ namespace Utils
             {
                 _nextRead = Time.unscaledTime + 0.5f;
 
-                var q = _em.CreateEntityQuery(ComponentType.ReadOnly<ECS.Components.TagCounters>());
-                if (!q.IsEmpty)
+                var q_tagCounters = _em.CreateEntityQuery(ComponentType.ReadOnly<ECS.Components.TagCounters>());
+                if (!q_tagCounters.IsEmpty)
                 {
-                    var e = q.GetSingletonEntity();
+                    var e = q_tagCounters.GetSingletonEntity();
                     _last = _em.GetComponentData<ECS.Components.TagCounters>(e);
+                }
+
+                var q_WaveData = _em.CreateEntityQuery(ComponentType.ReadOnly<ECS.Components.SpawnDebug>());
+
+                if (!q_WaveData.IsEmpty)
+                {
+                    var e = q_WaveData.GetSingletonEntity();
+                    _debug = _em.GetComponentData<ECS.Components.SpawnDebug>(e);
                 }
             }
             
@@ -46,7 +55,14 @@ namespace Utils
             _timer += Time.unscaledDeltaTime;
             if (_timer >= 1f)
             {
-                label.text = $"{fps:0.} FPS ({ms:0.0} ms)\n{_ticks} FixedTicks\n\nPlayers: {_last.Players}\nZombies: {_last.Zombies}";
+                label.text = $"{fps:0.} FPS ({ms:0.0} ms)\n" +
+                             $"{_ticks} FixedTicks\n\n" +
+                             $"Players: {_last.Players}\n" +
+                             $"Zombies: {_last.Zombies}\n\n" +
+                             $"Active Zombies: {_debug.ActiveZombies}\n" +
+                             $"Inactive: {_debug.InactiveZombies}\n" +
+                             $"Wave: {_debug.WaveIndex}\n" +
+                             $"Time to next: {_debug.TimeToNextWave}";
 
                 // Цвет по FPS
                 if (fps >= 55) label.color = Color.green;
