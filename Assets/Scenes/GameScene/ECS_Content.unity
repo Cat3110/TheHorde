@@ -130,6 +130,7 @@ GameObject:
   - component: {fileID: 1045458217}
   - component: {fileID: 1045458218}
   - component: {fileID: 1045458219}
+  - component: {fileID: 1045458220}
   m_Layer: 0
   m_Name: ECS_Bootstrap
   m_TagString: Untagged
@@ -186,6 +187,26 @@ MonoBehaviour:
   spawnJitter: 2
   spawnHealth: 10
   initialSpeed: 2
+--- !u!114 &1045458220
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1045458216}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6288f58ab79c4ebe91481669fd86cdf4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ECS.Authoring.SteeringParamsAuthoring
+  cellSize: 1
+  neighborRadius: 1.5
+  maxNeighbors: 6
+  avoidWeight: 1.8
+  targetWeight: 1
+  maxSpeed: 2.6
+  turnRate: 6
+  stopVelEps: 0.05
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

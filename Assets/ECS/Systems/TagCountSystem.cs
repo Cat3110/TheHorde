@@ -27,7 +27,7 @@ namespace ECS.Systems
 
             _zombiesActiveQ = SystemAPI.QueryBuilder()
                 .WithAll<ZombieTag>()
-                .WithNone<InactiveTag>() // считаем только активных
+                .WithDisabled<InactiveTag>() // считаем только активных
                 .Build();
 
         }

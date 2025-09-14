@@ -18,10 +18,21 @@ namespace Utils
         private float _nextRead;
         private ECS.Components.TagCounters _last;
         private ECS.Components.SpawnDebug _debug;
+        private ECS.Components.SteeringStats _steering;
+        
+        // поля класса
+        private EntityQuery _qTagCounters;
+        private EntityQuery _qSpawnDebug;
+        private EntityQuery _qSteering;
 
         void Awake()
         {
             _em = World.DefaultGameObjectInjectionWorld.EntityManager;
+            
+            // создаём ОДИН РАЗ
+            _qTagCounters = _em.CreateEntityQuery(ComponentType.ReadOnly<ECS.Components.TagCounters>());
+            _qSpawnDebug  = _em.CreateEntityQuery(ComponentType.ReadOnly<ECS.Components.SpawnDebug>());
+            _qSteering    = _em.CreateEntityQuery(ComponentType.ReadOnly<ECS.Components.SteeringStats>());
         }
 
         void Update()
@@ -30,20 +41,14 @@ namespace Utils
             {
                 _nextRead = Time.unscaledTime + 0.5f;
 
-                var q_tagCounters = _em.CreateEntityQuery(ComponentType.ReadOnly<ECS.Components.TagCounters>());
-                if (!q_tagCounters.IsEmpty)
-                {
-                    var e = q_tagCounters.GetSingletonEntity();
-                    _last = _em.GetComponentData<ECS.Components.TagCounters>(e);
-                }
+                if (!_qTagCounters.IsEmpty)
+                    _last = _em.GetComponentData<ECS.Components.TagCounters>(_qTagCounters.GetSingletonEntity());
 
-                var q_WaveData = _em.CreateEntityQuery(ComponentType.ReadOnly<ECS.Components.SpawnDebug>());
+                if (!_qSpawnDebug.IsEmpty)
+                    _debug = _em.GetComponentData<ECS.Components.SpawnDebug>(_qSpawnDebug.GetSingletonEntity());
 
-                if (!q_WaveData.IsEmpty)
-                {
-                    var e = q_WaveData.GetSingletonEntity();
-                    _debug = _em.GetComponentData<ECS.Components.SpawnDebug>(e);
-                }
+                if (!_qSteering.IsEmpty)
+                    _steering = _em.GetComponentData<ECS.Components.SteeringStats>(_qSteering.GetSingletonEntity());
             }
             
             // FPS (экспоненциальное сглаживание)
@@ -62,7 +67,9 @@ namespace Utils
                              $"Active Zombies: {_debug.ActiveZombies}\n" +
                              $"Inactive: {_debug.InactiveZombies}\n" +
                              $"Wave: {_debug.WaveIndex}\n" +
-                             $"Time to next: {_debug.TimeToNextWave}";
+                             $"Time to next: {_debug.TimeToNextWave}\n\n" +
+                             $"Standing: {_steering.StandingZombies} / {_steering.ActiveZombies} " +
+                             $"({_steering.StandingRatio:P0})";
 
                 // Цвет по FPS
                 if (fps >= 55) label.color = Color.green;

@@ -34,6 +34,7 @@ namespace ECS.Systems
             {
                 var z = ecb.Instantiate(cfg.ZombiePrefabEntity);
                 ecb.AddComponent<InactiveTag>(z);
+                ecb.SetComponentEnabled<InactiveTag>(z, true);
                 // Позицию/скорость будем выставлять при "активации" волны в SpawnSystem (1.1.3 продолжение)
             }
 

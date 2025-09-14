@@ -70,6 +70,7 @@ namespace ECS.Systems
                 {
                     var z = ecb.Instantiate(poolCfg.ZombiePrefabEntity);
                     ecb.AddComponent<InactiveTag>(z);
+                    ecb.SetComponentEnabled<InactiveTag>(z, true);
                 }
                 inactiveCount += need;
             }
@@ -113,7 +114,7 @@ namespace ECS.Systems
                     float3 vel = dir * cfg.InitialSpeed;
 
                     // Применяем через ECB
-                    ecb.RemoveComponent<InactiveTag>(e);
+                    ecb.SetComponentEnabled<InactiveTag>(e, false);
 
                     ecb.SetComponent(e, LocalTransform.FromPositionRotationScale(pos, quaternion.identity, 1f));
                     ecb.SetComponent(e, new Position { Value = pos });

@@ -21,7 +21,7 @@ namespace ECS.Systems
 
             _activeQ = new EntityQueryBuilder(Allocator.Temp)
                 .WithAll<ZombieTag>()
-                .WithNone<InactiveTag>()
+                .WithDisabled<InactiveTag>()
                 .Build(ref state);
 
             _inactiveQ = new EntityQueryBuilder(Allocator.Temp)
