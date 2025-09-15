@@ -92,7 +92,6 @@ namespace ECS.Systems
         {
             [ReadOnly] public float CellSize;
             [ReadOnly] public ComponentLookup<Position> PosLookupRO;
-
             public NativeParallelMultiHashMap<int, Entity>.ParallelWriter HashMap;
 
             [BurstCompile]

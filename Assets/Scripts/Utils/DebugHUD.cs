@@ -2,6 +2,7 @@ using System;
 using TMPro;
 using Unity.Entities;
 using UnityEngine;
+using Unity.Mathematics;
 
 namespace Utils
 {
@@ -24,6 +25,8 @@ namespace Utils
         private EntityQuery _qTagCounters;
         private EntityQuery _qSpawnDebug;
         private EntityQuery _qSteering;
+        private EntityQuery _qPlayer;
+        private float3 _playerPos;
 
         void Awake()
         {
@@ -33,6 +36,9 @@ namespace Utils
             _qTagCounters = _em.CreateEntityQuery(ComponentType.ReadOnly<ECS.Components.TagCounters>());
             _qSpawnDebug  = _em.CreateEntityQuery(ComponentType.ReadOnly<ECS.Components.SpawnDebug>());
             _qSteering    = _em.CreateEntityQuery(ComponentType.ReadOnly<ECS.Components.SteeringStats>());
+            _qPlayer     = _em.CreateEntityQuery(
+                ComponentType.ReadOnly<ECS.Components.PlayerTag>(),
+                ComponentType.ReadOnly<ECS.Components.Position>());
         }
 
         void Update()
@@ -49,6 +55,12 @@ namespace Utils
 
                 if (!_qSteering.IsEmpty)
                     _steering = _em.GetComponentData<ECS.Components.SteeringStats>(_qSteering.GetSingletonEntity());
+
+                if (!_qPlayer.IsEmpty)
+                {
+                    var playerEntity = _qPlayer.GetSingletonEntity();
+                    _playerPos = _em.GetComponentData<ECS.Components.Position>(playerEntity).Value;
+                }
             }
             
             // FPS (экспоненциальное сглаживание)
@@ -63,6 +75,7 @@ namespace Utils
                 label.text = $"{fps:0.} FPS ({ms:0.0} ms)\n" +
                              $"{_ticks} FixedTicks\n\n" +
                              $"Players: {_last.Players}\n" +
+                             $"Player Pos: {_playerPos.x:0.0}, {_playerPos.y:0.0}, {_playerPos.z:0.0}\n" +
                              $"Zombies: {_last.Zombies}\n\n" +
                              $"Active Zombies: {_debug.ActiveZombies}\n" +
                              $"Inactive: {_debug.InactiveZombies}\n" +
