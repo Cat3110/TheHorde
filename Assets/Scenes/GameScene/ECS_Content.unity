@@ -131,6 +131,7 @@ GameObject:
   - component: {fileID: 1045458218}
   - component: {fileID: 1045458219}
   - component: {fileID: 1045458220}
+  - component: {fileID: 1045458221}
   m_Layer: 0
   m_Name: ECS_Bootstrap
   m_TagString: Untagged
@@ -147,7 +148,7 @@ Transform:
   m_GameObject: {fileID: 1045458216}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 5.22215, y: -9.13515, z: 13.45423}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -207,6 +208,21 @@ MonoBehaviour:
   maxSpeed: 2.6
   turnRate: 6
   stopVelEps: 0.05
+--- !u!114 &1045458221
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1045458216}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9134c49f1c8b452d9497b690266868bc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ECS.Authoring.RenderResourcesAuthoring
+  InstancedMaterial: {fileID: 2100000, guid: 7fbbcf46778a04224a7dd4f611096c9c, type: 2}
+  PlayerMesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+  ZombieMesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

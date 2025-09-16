@@ -2,6 +2,7 @@ using ECS.Components;
 using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Transforms;
 
 namespace ECS.Systems
 {
@@ -9,10 +10,11 @@ namespace ECS.Systems
     [UpdateInGroup(typeof(InitializationSystemGroup))]
     public partial struct BootstrapOnePlayerSystem : ISystem
     {
+
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
-            
+            // no-op
         }
 
         [BurstCompile]
@@ -27,13 +29,18 @@ namespace ECS.Systems
                 return;
             }
             
-            // Создаём сущность БЕЗ params: CreateEntity() + generic AddComponent*
+            // Создаём сущность без archetype и явно добавляем нужные компоненты
             var e = em.CreateEntity();
+
             em.AddComponentData(e, new Position { Value = float3.zero });
             em.AddComponentData(e, new Velocity { Value = float3.zero });
             em.AddComponentData(e, new Radius   { Value = 0.5f });
             em.AddComponentData(e, new Health   { Value = 100 });
             em.AddComponent<PlayerTag>(e);
+
+            // Трансформы для рендера
+            em.AddComponentData(e, LocalTransform.FromPositionRotationScale(float3.zero, quaternion.identity, 1f));
+            em.AddComponent<LocalToWorld>(e); // чтобы Transform-системы поддерживали L2W
 
             state.Enabled = false;
         }

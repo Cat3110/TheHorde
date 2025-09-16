@@ -12,17 +12,12 @@ namespace ECS.Systems
     public partial struct SpawnWaveSystem : ISystem
     {
         private EntityQuery _inactiveZombiesQ;
-        
-        private EntityTypeHandle _entityTypeHandle;
-        
         private ComponentLookup<LocalTransform> _ltLookup;
-
         
         [BurstCompile]
         public void OnCreate(ref SystemState state)
         {
             _ltLookup = state.GetComponentLookup<LocalTransform>(isReadOnly: true);
-            _entityTypeHandle = state.GetEntityTypeHandle();
 
             _inactiveZombiesQ = new EntityQueryBuilder(Allocator.Temp)
                 .WithAll<ZombieTag, InactiveTag>()
@@ -31,15 +26,13 @@ namespace ECS.Systems
             state.RequireForUpdate<SpawnWavesConfig>();
             state.RequireForUpdate<SpawnPoolConfig>();
             state.RequireForUpdate<PlayerTag>();
+            state.RequireForUpdate<SpawnWaveState>();
             state.RequireForUpdate<BeginSimulationEntityCommandBufferSystem.Singleton>();
         }
 
         [BurstCompile]
         public void OnUpdate(ref SystemState state)
         {
-            // ✅ обновляем handle на кадр
-            _entityTypeHandle.Update(ref state);
-            
             var dt = SystemAPI.Time.DeltaTime;
 
             ref var cfg  = ref SystemAPI.GetSingletonRW<SpawnWavesConfig>().ValueRW;
@@ -54,23 +47,29 @@ namespace ECS.Systems
             st.Timer = 0f;
             st.WaveIndex++;
 
-            // Сколько неактивных есть в пуле сейчас?
-            var inactiveCount = _inactiveZombiesQ.CalculateEntityCount();
+            // Сколько неактивных есть в пуле сейчас? (InactiveTag enabled = в пуле)
+            int inactiveCount = 0;
+            foreach (var (inactive, _) in SystemAPI.Query<EnabledRefRO<InactiveTag>, RefRO<ZombieTag>>())
+            {
+                if (inactive.ValueRO)
+                    inactiveCount++;
+            }
 
             // ECB для безопасных структурных изменений
             var ecb = SystemAPI
                 .GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>()
                 .CreateCommandBuffer(state.WorldUnmanaged);
             
-            // 2.1 Дозаполнить пул, если надо
+            // 2.1 Дозаполнить пул, если надо (добираем недостающее, но не больше лимита за тик)
             if (inactiveCount < poolCfg.RefillThreshold)
             {
-                var need = math.max(0, poolCfg.RefillCount);
+                int deficit = poolCfg.RefillThreshold - inactiveCount;
+                int need = math.min(deficit, poolCfg.RefillCount);
                 for (int i = 0; i < need; i++)
                 {
                     var z = ecb.Instantiate(poolCfg.ZombiePrefabEntity);
                     ecb.AddComponent<InactiveTag>(z);
-                    ecb.SetComponentEnabled<InactiveTag>(z, true);
+                    ecb.SetComponentEnabled<InactiveTag>(z, true); // в пуле
                 }
                 inactiveCount += need;
             }
@@ -88,41 +87,39 @@ namespace ECS.Systems
             int toActivate = math.min(cfg.ZombiesPerWave, inactiveCount);
             if (toActivate == 0) return;
 
-            using var chunks = _inactiveZombiesQ.ToArchetypeChunkArray(Allocator.TempJob);
             int remaining = toActivate;
+            var rng = new Random(st.RngState == 0 ? 1u : st.RngState);
 
-            // RNG в стейте
-            var rng = new Unity.Mathematics.Random(st.RngState == 0 ? 1u : st.RngState);
-
-            for (int ci = 0; ci < chunks.Length && remaining > 0; ci++)
+            foreach (var (inactive, lt, pos, vel, hp) in SystemAPI.Query<EnabledRefRW<InactiveTag>, RefRW<LocalTransform>, RefRW<Position>, RefRW<Velocity>, RefRW<Health>>()
+                                                                  .WithAll<ZombieTag>())
             {
-                var chunk = chunks[ci];
-                var entities = chunk.GetNativeArray(_entityTypeHandle);
+                if (remaining == 0) break;
 
-                int take = math.min(entities.Length, remaining);
-                for (int i = 0; i < take; i++)
-                {
-                    var e = entities[i];
+                // Берём только реально неактивных (в пуле)
+                if (!inactive.ValueRO)
+                    continue;
 
-                    // Случайная позиция вокруг игрока
-                    float angle = rng.NextFloat(0, 2f * math.PI);
-                    float r = cfg.SpawnRadius + rng.NextFloat(-cfg.SpawnJitter, cfg.SpawnJitter);
-                    float3 pos = playerPos + new float3(math.cos(angle) * r, 0, math.sin(angle) * r);
+                // Случайная позиция вокруг игрока
+                float angle = rng.NextFloat(0, 2f * math.PI);
+                float r = cfg.SpawnRadius + rng.NextFloat(-cfg.SpawnJitter, cfg.SpawnJitter);
+                float3 spawnPos = playerPos + new float3(math.cos(angle) * r, 0, math.sin(angle) * r);
 
-                    // Направление к игроку, стартовая скорость
-                    float3 dir = math.normalize(playerPos - pos);
-                    float3 vel = dir * cfg.InitialSpeed;
+                // Направление к игроку, стартовая скорость (устойчиво при совпадении точек)
+                float3 d = playerPos - spawnPos;
+                float lenSq = math.lengthsq(d);
+                float3 dir = lenSq > 1e-6f ? d * math.rsqrt(lenSq) : new float3(0, 0, 1);
+                float3 startVel = dir * cfg.InitialSpeed;
 
-                    // Применяем через ECB
-                    ecb.SetComponentEnabled<InactiveTag>(e, false);
+                // Записываем данные напрямую (не структурные изменения)
+                lt.ValueRW = LocalTransform.FromPositionRotationScale(spawnPos, quaternion.identity, 1f);
+                pos.ValueRW = new Position { Value = spawnPos };
+                vel.ValueRW = new Velocity { Value = startVel };
+                hp.ValueRW  = new Health   { Value = cfg.SpawnHealth };
 
-                    ecb.SetComponent(e, LocalTransform.FromPositionRotationScale(pos, quaternion.identity, 1f));
-                    ecb.SetComponent(e, new Position { Value = pos });
-                    ecb.SetComponent(e, new Velocity { Value = vel });
-                    ecb.SetComponent(e, new Health { Value = cfg.SpawnHealth });
-                }
+                // Активируем (disable InactiveTag)
+                inactive.ValueRW = false;
 
-                remaining -= take;
+                remaining--;
             }
 
             // Сохраняем обновлённый seed
