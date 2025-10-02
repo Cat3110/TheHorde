@@ -3,6 +3,7 @@ using TMPro;
 using Unity.Entities;
 using UnityEngine;
 using Unity.Mathematics;
+using ECS.Components;
 
 namespace Utils
 {
@@ -15,17 +16,19 @@ namespace Utils
         private int _ticks;
         private float _timer;
         
-        private Unity.Entities.EntityManager _em;
+        private EntityManager _em;
         private float _nextRead;
-        private ECS.Components.TagCounters _last;
-        private ECS.Components.SpawnDebug _debug;
-        private ECS.Components.SteeringStats _steering;
+        private TagCounters _last;
+        private SpawnDebug _debug;
+        private SteeringStats _steering;
+        private DamageStats _damage;
+        private Health _health;
         
-        // поля класса
         private EntityQuery _qTagCounters;
         private EntityQuery _qSpawnDebug;
         private EntityQuery _qSteering;
-        private EntityQuery _qPlayer;
+        private EntityQuery _qPlayerFull;
+        private EntityQuery _qDamageStats;
         private float3 _playerPos;
 
         void Awake()
@@ -33,34 +36,41 @@ namespace Utils
             _em = World.DefaultGameObjectInjectionWorld.EntityManager;
             
             // создаём ОДИН РАЗ
-            _qTagCounters = _em.CreateEntityQuery(ComponentType.ReadOnly<ECS.Components.TagCounters>());
-            _qSpawnDebug  = _em.CreateEntityQuery(ComponentType.ReadOnly<ECS.Components.SpawnDebug>());
-            _qSteering    = _em.CreateEntityQuery(ComponentType.ReadOnly<ECS.Components.SteeringStats>());
-            _qPlayer     = _em.CreateEntityQuery(
-                ComponentType.ReadOnly<ECS.Components.PlayerTag>(),
-                ComponentType.ReadOnly<ECS.Components.Position>());
+            _qTagCounters = _em.CreateEntityQuery(ComponentType.ReadOnly<TagCounters>());
+            _qSpawnDebug  = _em.CreateEntityQuery(ComponentType.ReadOnly<SpawnDebug>());
+            _qSteering    = _em.CreateEntityQuery(ComponentType.ReadOnly<SteeringStats>());
+            _qPlayerFull  = _em.CreateEntityQuery(ComponentType.ReadOnly<PlayerTag>(), ComponentType.ReadOnly<Position>(), ComponentType.ReadOnly<Health>());
+            _qDamageStats = _em.CreateEntityQuery(ComponentType.ReadOnly<DamageStats>());
+            
         }
 
         void Update()
         {
+            if (label == null)
+                return;
+
             if (Time.unscaledTime >= _nextRead)
             {
                 _nextRead = Time.unscaledTime + 0.5f;
 
                 if (!_qTagCounters.IsEmpty)
-                    _last = _em.GetComponentData<ECS.Components.TagCounters>(_qTagCounters.GetSingletonEntity());
+                    _last = _em.GetComponentData<TagCounters>(_qTagCounters.GetSingletonEntity());
 
                 if (!_qSpawnDebug.IsEmpty)
-                    _debug = _em.GetComponentData<ECS.Components.SpawnDebug>(_qSpawnDebug.GetSingletonEntity());
+                    _debug = _em.GetComponentData<SpawnDebug>(_qSpawnDebug.GetSingletonEntity());
 
                 if (!_qSteering.IsEmpty)
-                    _steering = _em.GetComponentData<ECS.Components.SteeringStats>(_qSteering.GetSingletonEntity());
+                    _steering = _em.GetComponentData<SteeringStats>(_qSteering.GetSingletonEntity());
 
-                if (!_qPlayer.IsEmpty)
+                if (!_qPlayerFull.IsEmpty)
                 {
-                    var playerEntity = _qPlayer.GetSingletonEntity();
-                    _playerPos = _em.GetComponentData<ECS.Components.Position>(playerEntity).Value;
+                    var playerEntity = _qPlayerFull.GetSingletonEntity();
+                    _playerPos = _em.GetComponentData<Position>(playerEntity).Value;
+                    _health    = _em.GetComponentData<Health>(playerEntity);
                 }
+                
+                if (!_qDamageStats.IsEmpty)
+                    _damage = _em.GetComponentData<DamageStats>(_qDamageStats.GetSingletonEntity());
             }
             
             // FPS (экспоненциальное сглаживание)
@@ -72,17 +82,22 @@ namespace Utils
             _timer += Time.unscaledDeltaTime;
             if (_timer >= 1f)
             {
-                label.text = $"{fps:0.} FPS ({ms:0.0} ms)\n" +
-                             $"{_ticks} FixedTicks\n\n" +
-                             $"Players: {_last.Players}\n" +
-                             $"Player Pos: {_playerPos.x:0.0}, {_playerPos.y:0.0}, {_playerPos.z:0.0}\n" +
-                             $"Zombies: {_last.Zombies}\n\n" +
-                             $"Active Zombies: {_debug.ActiveZombies}\n" +
-                             $"Inactive: {_debug.InactiveZombies}\n" +
-                             $"Wave: {_debug.WaveIndex}\n" +
-                             $"Time to next: {_debug.TimeToNextWave}\n\n" +
-                             $"Standing: {_steering.StandingZombies} / {_steering.ActiveZombies} " +
-                             $"({_steering.StandingRatio:P0})";
+                label.SetText(
+                    $"{fps:0.} FPS ({ms:0.0} ms)\n" +
+                    $"{_ticks} FixedTicks\n\n" +
+                    $"Players: {_last.Players}\n" +
+                    $"Player Pos: {_playerPos.x:0.0}, {_playerPos.y:0.0}, {_playerPos.z:0.0}\n" +
+                    $"Player HP: {_health.Value}\n" +
+                    $"Zombies: {_last.Zombies}\n\n" +
+                    $"Active Zombies: {_debug.ActiveZombies}\n" +
+                    $"Inactive: {_debug.InactiveZombies}\n" +
+                    $"Wave: {_debug.WaveIndex}\n" +
+                    $"Time to next: {_debug.TimeToNextWave}\n\n" +
+                    $"Standing: {_steering.StandingZombies} / {_steering.ActiveZombies} " +
+                    $"({_steering.StandingRatio:P0})\n\n" +
+                    $"DamageEvents/frame: {_damage.ProcessedThisFrame}"
+                );
+                 
 
                 // Цвет по FPS
                 if (fps >= 55) label.color = Color.green;

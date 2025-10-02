@@ -118,6 +118,7 @@ namespace ECS.Systems
 
                 // Активируем (disable InactiveTag)
                 inactive.ValueRW = false;
+                
 
                 remaining--;
             }

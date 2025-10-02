@@ -37,6 +37,10 @@ namespace ECS.Systems
             em.AddComponentData(e, new Radius   { Value = 0.5f });
             em.AddComponentData(e, new Health   { Value = 100 });
             em.AddComponent<PlayerTag>(e);
+            
+            // при создании игрока
+            if (!em.HasBuffer<DamageEvent>(e))
+                em.AddBuffer<DamageEvent>(e);
 
             // Трансформы для рендера
             em.AddComponentData(e, LocalTransform.FromPositionRotationScale(float3.zero, quaternion.identity, 1f));
