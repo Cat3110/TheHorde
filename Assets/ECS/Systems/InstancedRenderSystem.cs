@@ -58,8 +58,7 @@ namespace ECS.Systems
                 _playerMatrices.Add(ltw.ValueRO.Value);
 
             foreach (var (ltw, _) in SystemAPI.Query<RefRO<LocalToWorld>, RefRO<ZombieTag>>()
-                         .WithAll<InactiveTag>()
-                         .WithDisabled<InactiveTag>()) // рисуем только активных (InactiveTag выключен)
+                             .WithDisabled<InactiveTag>()) // рисуем только активных (InactiveTag выключен)
             {
                 _zombieMatrices.Add(ltw.ValueRO.Value);
             }

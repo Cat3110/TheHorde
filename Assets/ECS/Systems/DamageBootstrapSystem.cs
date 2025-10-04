@@ -23,8 +23,8 @@ namespace ECS.Systems
                 var e = state.EntityManager.CreateEntity(typeof(DamageConfig));
                 state.EntityManager.SetComponentData(e, new DamageConfig
                 {
-                    ZombieTouchDamageToPlayer = 1,
-                    PlayerTouchDamageToZombie = 0, // можно включить "шипы" у игрока позже
+                    ZombieTouchDamageToPlayer = 0,
+                    PlayerTouchDamageToZombie = 10, // можно включить "шипы" у игрока позже
                     ProjectileDamage = 10
                 });
             }

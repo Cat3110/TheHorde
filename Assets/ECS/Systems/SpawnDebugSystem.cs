@@ -9,6 +9,8 @@ namespace ECS.Systems
     
     [BurstCompile]
     [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateAfter(typeof(SpawnWaveSystem))]
+    [UpdateAfter(typeof(DeathCleanupSystem))]
     public partial struct SpawnDebugSystem : ISystem
     {
         EntityQuery _activeQ;

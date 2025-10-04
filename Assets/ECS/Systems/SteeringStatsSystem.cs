@@ -46,9 +46,12 @@ namespace ECS.Systems
             float eps2 = cfg.StopVelEps * cfg.StopVelEps;
             int standing = 0;
 
-            foreach (var vel in _activeZombie.ToComponentDataArray<Velocity>(Allocator.Temp))
+            // Без аллокаций: напрямую итерируем по активным зомби
+            foreach (var vel in SystemAPI.Query<RefRO<Velocity>>()
+                                         .WithAll<ZombieTag>()
+                                         .WithDisabled<InactiveTag>())
             {
-                if (math.lengthsq(vel.Value) < eps2) standing++;
+                if (math.lengthsq(vel.ValueRO.Value) < eps2) standing++;
             }
             
             float ratio = (float)standing / active;

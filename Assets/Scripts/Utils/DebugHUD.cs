@@ -23,12 +23,14 @@ namespace Utils
         private SteeringStats _steering;
         private DamageStats _damage;
         private Health _health;
+        private DeathStats _deaths;
         
         private EntityQuery _qTagCounters;
         private EntityQuery _qSpawnDebug;
         private EntityQuery _qSteering;
         private EntityQuery _qPlayerFull;
         private EntityQuery _qDamageStats;
+        private EntityQuery _qDeathStats;
         private float3 _playerPos;
 
         void Awake()
@@ -41,6 +43,7 @@ namespace Utils
             _qSteering    = _em.CreateEntityQuery(ComponentType.ReadOnly<SteeringStats>());
             _qPlayerFull  = _em.CreateEntityQuery(ComponentType.ReadOnly<PlayerTag>(), ComponentType.ReadOnly<Position>(), ComponentType.ReadOnly<Health>());
             _qDamageStats = _em.CreateEntityQuery(ComponentType.ReadOnly<DamageStats>());
+            _qDeathStats = _em.CreateEntityQuery(ComponentType.ReadOnly<DeathStats>());
             
         }
 
@@ -71,6 +74,9 @@ namespace Utils
                 
                 if (!_qDamageStats.IsEmpty)
                     _damage = _em.GetComponentData<DamageStats>(_qDamageStats.GetSingletonEntity());
+
+                if (!_qDeathStats.IsEmpty)
+                    _deaths = _em.GetComponentData<DeathStats>(_qDeathStats.GetSingletonEntity());
             }
             
             // FPS (экспоненциальное сглаживание)
@@ -80,11 +86,12 @@ namespace Utils
 
             // FixedUpdate частота
             _timer += Time.unscaledDeltaTime;
-            if (_timer >= 1f)
+            if (_timer >= 0.5f)
             {
+                float ticksPerSec = _ticks / _timer;
                 label.SetText(
                     $"{fps:0.} FPS ({ms:0.0} ms)\n" +
-                    $"{_ticks} FixedTicks\n\n" +
+                    $"{ticksPerSec:0.} FixedTicks/s\n\n" +
                     $"Players: {_last.Players}\n" +
                     $"Player Pos: {_playerPos.x:0.0}, {_playerPos.y:0.0}, {_playerPos.z:0.0}\n" +
                     $"Player HP: {_health.Value}\n" +
@@ -95,7 +102,9 @@ namespace Utils
                     $"Time to next: {_debug.TimeToNextWave}\n\n" +
                     $"Standing: {_steering.StandingZombies} / {_steering.ActiveZombies} " +
                     $"({_steering.StandingRatio:P0})\n\n" +
-                    $"DamageEvents/frame: {_damage.ProcessedThisFrame}"
+                    $"DamageEvents/frame: {_damage.ProcessedThisFrame}" +
+                    $"\nDeaths/frame: {_deaths.DeathsThisFrame}" +
+                    $"\nDeaths total: {_deaths.TotalDeaths}"
                 );
                  
 

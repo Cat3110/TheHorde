@@ -90,8 +90,15 @@ namespace ECS.Systems
             int remaining = toActivate;
             var rng = new Random(st.RngState == 0 ? 1u : st.RngState);
 
-            foreach (var (inactive, lt, pos, vel, hp) in SystemAPI.Query<EnabledRefRW<InactiveTag>, RefRW<LocalTransform>, RefRW<Position>, RefRW<Velocity>, RefRW<Health>>()
-                                                                  .WithAll<ZombieTag>())
+            foreach (var (inactive, lt, pos, vel, hp, dmg) in SystemAPI.Query<
+                 EnabledRefRW<InactiveTag>,
+                 RefRW<LocalTransform>,
+                 RefRW<Position>,
+                 RefRW<Velocity>,
+                 RefRW<Health>,
+                 DynamicBuffer<DamageEvent>
+             >()
+             .WithAll<ZombieTag>())
             {
                 if (remaining == 0) break;
 
@@ -115,6 +122,10 @@ namespace ECS.Systems
                 pos.ValueRW = new Position { Value = spawnPos };
                 vel.ValueRW = new Velocity { Value = startVel };
                 hp.ValueRW  = new Health   { Value = cfg.SpawnHealth };
+
+                // Очистка буфера урона на случай, если остались записи с прошлой «жизни»
+                if (dmg.IsCreated && dmg.Length > 0)
+                    dmg.Clear();
 
                 // Активируем (disable InactiveTag)
                 inactive.ValueRW = false;

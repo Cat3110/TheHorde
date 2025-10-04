@@ -24,6 +24,10 @@ namespace ECS.Systems
 
             var cfg = SystemAPI.GetSingleton<SpawnPoolConfig>();
 
+            // Препроверяем компоненты на префабе
+            var prefabHasDamage = state.EntityManager.HasBuffer<DamageEvent>(cfg.ZombiePrefabEntity);
+            var prefabHasInactive = state.EntityManager.HasComponent<InactiveTag>(cfg.ZombiePrefabEntity);
+
             // ECB из BeginInitialization — избегаем временных аллокаций
             var ecb = SystemAPI
                 .GetSingleton<BeginInitializationEntityCommandBufferSystem.Singleton>()
@@ -33,8 +37,13 @@ namespace ECS.Systems
             for (int i = 0; i < cfg.InitialCapacity; i++)
             {
                 var z = ecb.Instantiate(cfg.ZombiePrefabEntity);
-                ecb.AddBuffer<DamageEvent>(z);
-                ecb.AddComponent<InactiveTag>(z);
+                if (!prefabHasDamage)
+                    ecb.AddBuffer<DamageEvent>(z); // если буфера нет на префабе — добавим на инстансе
+
+                if (!prefabHasInactive)
+                    ecb.AddComponent<InactiveTag>(z); // если тега нет на префабе — добавим
+
+                // гарантируем, что инстанс уходит в пул (InactiveTag включён)
                 ecb.SetComponentEnabled<InactiveTag>(z, true);
                 // Позицию/скорость будем выставлять при "активации" волны в SpawnSystem (1.1.3 продолжение)
             }
