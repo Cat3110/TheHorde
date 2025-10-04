@@ -5,7 +5,7 @@ using Unity.Entities;
 namespace ECS.Systems
 {
     [BurstCompile]
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
     [UpdateAfter(typeof(ProjectileHitSystem))]
     [UpdateAfter(typeof(CollisionContactDamageSystem))]
     public partial struct DamageSystem : ISystem
@@ -18,6 +18,7 @@ namespace ECS.Systems
             foreach (var (health, dmgBuffer) in SystemAPI.Query<RefRW<Health>, DynamicBuffer<DamageEvent>>())
             {
                 int total = 0;
+                
                 for (int i = 0; i < dmgBuffer.Length; i++)
                 {
                     total += dmgBuffer[i].Amount;

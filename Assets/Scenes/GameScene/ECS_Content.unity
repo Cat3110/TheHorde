@@ -168,8 +168,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ECS.Authoring.SpawnPoolConfigAuthoring
   zombiePrefab: {fileID: 2327475779663991268, guid: e612d2916e83243648ef635dc369ae1e, type: 3}
   initialCapacity: 200
-  refillThreshold: 20
-  refillCount: 100
+  refillThreshold: 50
+  refillCount: 50
 --- !u!114 &1045458219
 MonoBehaviour:
   m_ObjectHideFlags: 0

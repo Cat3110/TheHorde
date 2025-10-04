@@ -1,6 +1,7 @@
 using ECS.Components;
 using Unity.Burst;
 using Unity.Entities;
+using UnityEngine;
 
 namespace ECS.Systems
 {
@@ -27,7 +28,7 @@ namespace ECS.Systems
             // Препроверяем компоненты на префабе
             var prefabHasDamage = state.EntityManager.HasBuffer<DamageEvent>(cfg.ZombiePrefabEntity);
             var prefabHasInactive = state.EntityManager.HasComponent<InactiveTag>(cfg.ZombiePrefabEntity);
-
+            
             // ECB из BeginInitialization — избегаем временных аллокаций
             var ecb = SystemAPI
                 .GetSingleton<BeginInitializationEntityCommandBufferSystem.Singleton>()

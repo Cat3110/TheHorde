@@ -6,7 +6,7 @@ using Unity.Mathematics;
 namespace ECS.Systems
 {
     [BurstCompile]
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
     [UpdateAfter(typeof(CollisionContactDamageSystem))] // порядок не критичен, главное после движения
     public partial struct ProjectileHitSystem : ISystem
     {
@@ -58,15 +58,29 @@ namespace ECS.Systems
                     var c = posLookup[zEntity].Value;
                     float cr = radLookup[zEntity].Value;
 
-                    if (SegmentCircleHit(p0, p1, c, pr + cr))
                     {
-                        var dmg = proj.ValueRO.Damage > 0 ? proj.ValueRO.Damage : cfg.ProjectileDamage;
-                        var buf = damageLookup[zEntity];
-                        buf.Add(new DamageEvent { Amount = dmg, Source = projEntity });
+                        float2 a = p0.xz;
+                        float2 b = p1.xz;
+                        float2 o = c.xz;
+                        float  r = pr + cr;
 
-                        hit = true;
-                        // Можно разрешить «пробитие» нескольких целей — тогда не ставим HitOnce.
-                        break;
+                        float2 ab = b - a;
+                        float2 ao = o - a;
+                        float   abLenSq = math.max(1e-6f, math.lengthsq(ab));
+                        float   t = math.saturate(math.dot(ao, ab) / abLenSq);
+                        float2  closest = a + t * ab;
+                        float   distSq = math.lengthsq(o - closest);
+
+                        if (distSq <= r * r)
+                        {
+                            var dmg = proj.ValueRO.Damage > 0 ? proj.ValueRO.Damage : cfg.ProjectileDamage;
+                            var buf = damageLookup[zEntity];
+                            buf.Add(new DamageEvent { Amount = dmg, Source = projEntity });
+
+                            hit = true;
+                            // Можно разрешить «пробитие» нескольких целей — тогда не ставим HitOnce.
+                            break;
+                        }
                     }
                 }
 
@@ -82,23 +96,5 @@ namespace ECS.Systems
             }
         }
 
-        [BurstCompile]
-        private static bool SegmentCircleHit(float3 p0, float3 p1, float3 c, float r)
-        {
-            // Перенос в 2D (xz), если у тебя топ-даун. Для 3D — используй xyz как есть.
-            float2 a = p0.xz;
-            float2 b = p1.xz;
-            float2 o = c.xz;
-
-            float2 ab = b - a;
-            float2 ao = o - a;
-
-            float abLenSq = math.max(1e-6f, math.lengthsq(ab));
-            float t = math.saturate(math.dot(ao, ab) / abLenSq);
-
-            float2 closest = a + t * ab;
-            float distSq = math.lengthsq(o - closest);
-            return distSq <= r * r;
-        }
     }
 }

@@ -35,7 +35,7 @@ namespace ECS.Systems
             em.AddComponentData(e, new Position { Value = float3.zero });
             em.AddComponentData(e, new Velocity { Value = float3.zero });
             em.AddComponentData(e, new Radius   { Value = 0.5f });
-            em.AddComponentData(e, new Health   { Value = 100 });
+            em.AddComponentData(e, new Health   { Value = 1000 });
             em.AddComponent<PlayerTag>(e);
             
             // при создании игрока

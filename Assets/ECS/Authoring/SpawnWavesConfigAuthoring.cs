@@ -7,7 +7,7 @@ namespace ECS.Authoring
     public class SpawnWavesConfigAuthoring : MonoBehaviour
     {        
         [Header("Wave")]
-        public int zombiesPerWave = 50;     // сколько активировать за волну
+        public int zombiesPerWave = 1;     // сколько активировать за волну
         public float waveInterval = 2.5f;   // период между волнами, сек
 
         [Header("Placement")]

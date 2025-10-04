@@ -5,7 +5,7 @@ using Unity.Entities;
 namespace ECS.Systems
 {
     [BurstCompile]
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
     [UpdateBefore(typeof(DeathCleanupSystem))]
     public partial struct DeathStatsResetSystem : ISystem
     {

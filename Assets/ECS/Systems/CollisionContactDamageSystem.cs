@@ -2,11 +2,12 @@ using ECS.Components;
 using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
+using UnityEngine;
 
 namespace ECS.Systems
 {
     [BurstCompile]
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
     [UpdateAfter(typeof(ZombieSteeringSystem))] // после движения
     public partial struct CollisionContactDamageSystem : ISystem
     {

@@ -2,11 +2,15 @@ using ECS.Components;
 using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Collections;
+using Unity.Burst.Intrinsics;
+using Unity.Collections.LowLevel.Unsafe;
+using Unity.Jobs.LowLevel.Unsafe;
 
 namespace ECS.Systems
 {
     [BurstCompile]
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
     [UpdateAfter(typeof(DamageSystem))] // важно: сначала применяем урон
     public partial struct DeathCleanupSystem : ISystem
     {
@@ -20,59 +24,42 @@ namespace ECS.Systems
         }
 
         [BurstCompile]
-        public void OnUpdate(ref SystemState state)
+        public void OnDestroy(ref SystemState state)
         {
-            var statsRW = SystemAPI.GetSingletonRW<DeathStats>();
-
-            var job = new DeathCleanupJob
-            {
-                // всегда считаем deaths заново за текущий кадр
-                DeathsThisFrame = 0
-            };
-
-            state.Dependency = job.Schedule(state.Dependency);
-            state.Dependency.Complete(); // нам нужно вернуть число смертей, потому завершаем джоб
-            statsRW.ValueRW.DeathsThisFrame = job.DeathsThisFrame;   // per-frame metric (сбрасывается в Reset-системе)
-            statsRW.ValueRW.TotalDeaths     += job.DeathsThisFrame;   // кумулятивная метрика за сессию
         }
 
         [BurstCompile]
-        private partial struct DeathCleanupJob : IJobEntity
+        public void OnUpdate(ref SystemState state)
         {
-            // Счётчик смертей за кадр (через capture-by-value)
-            public int DeathsThisFrame;
+            var statsRW = SystemAPI.GetSingletonRW<DeathStats>();
+            int diedThisFrame = 0;
 
-            // Обрабатываем только активных зомби (у которых InactiveTag выключен)
-            private void Execute(
-                ref Health health,
-                ref Velocity velocity,
-                EnabledRefRW<InactiveTag> inactiveTag,
-                DynamicBuffer<DamageEvent> damageEvents,
-                in ZombieTag _ // фильтр
-            )
+            // Обрабатываем только активных зомби (InactiveTag выключен)
+            foreach (var (health, velocity, inactiveTag, damageEvents) in SystemAPI
+                         .Query<RefRW<Health>, RefRW<Velocity>, EnabledRefRW<InactiveTag>, DynamicBuffer<DamageEvent>>()
+                         .WithAll<ZombieTag>()
+                         .WithDisabled<InactiveTag>())
             {
-                // Уже в пуле — ничего не делаем
-                if (inactiveTag.ValueRO)
-                    return;
+                if (health.ValueRO.Value > 0)
+                    continue;
 
-                if (health.Value > 0)
-                    return;
-
-                // Помечаем как неактивного (реюз через пул)
+                // Возврат в пул: включаем InactiveTag
                 inactiveTag.ValueRW = true;
 
-                // Чистим состояние
-                velocity.Value = float3.zero;
+                // Сброс состояния
+                velocity.ValueRW.Value = float3.zero;
                 if (damageEvents.IsCreated && damageEvents.Length > 0)
                     damageEvents.Clear();
 
-                // Важно: Health оставляем как есть (<=0). При последующем реюзе SpawnWaveSystem
-                // всё равно задаёт новое значение Health. Можно сбросить в 0 для читаемости:
-                health.Value = 0;
+                // Нормализуем здоровье
+                health.ValueRW.Value = 0;
 
-                // Счётчик смертей (локальная переменная в джобе)
-                DeathsThisFrame++;
+                diedThisFrame++;
             }
+
+            // Обновить статистику
+            statsRW.ValueRW.DeathsThisFrame = diedThisFrame;
+            statsRW.ValueRW.TotalDeaths     += diedThisFrame;
         }
     }
 }

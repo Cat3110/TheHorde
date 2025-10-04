@@ -10,9 +10,9 @@ namespace ECS.Authoring
         public GameObject zombiePrefab;
 
         [Header("Pool Sizes")]
-        public int initialCapacity = 200;   // стартовый размер пула
-        public int refillThreshold = 20;    // при таком остатке можно будет дозаполнять (на следующих шагах)
-        public int refillCount = 100; 
+        public int initialCapacity = 1;   // стартовый размер пула
+        public int refillThreshold = 2;    // при таком остатке можно будет дозаполнять (на следующих шагах)
+        public int refillCount = 1; 
         
         private class SpawnPoolConfigAuthoringBaker : Baker<SpawnPoolConfigAuthoring>
         {

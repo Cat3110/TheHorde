@@ -8,7 +8,7 @@ namespace ECS.Systems
 {
     
     [BurstCompile]
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
     [UpdateAfter(typeof(SpawnWaveSystem))]
     [UpdateAfter(typeof(DeathCleanupSystem))]
     public partial struct SpawnDebugSystem : ISystem

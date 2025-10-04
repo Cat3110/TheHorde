@@ -13,27 +13,23 @@ namespace ECS.Systems
             // Синглтон статистики урона
             if (!SystemAPI.HasSingleton<DamageStats>())
             {
-                var e = state.EntityManager.CreateEntity(typeof(DamageStats));
+                var e = state.EntityManager.CreateEntity();
+                state.EntityManager.AddComponent<DamageStats>(e);
                 state.EntityManager.SetComponentData(e, new DamageStats { ProcessedThisFrame = 0 });
             }
 
             // Синглтон конфигурации урона (дефолт)
             if (!SystemAPI.HasSingleton<DamageConfig>())
             {
-                var e = state.EntityManager.CreateEntity(typeof(DamageConfig));
+                var e = state.EntityManager.CreateEntity();
+                state.EntityManager.AddComponent<DamageConfig>(e);
                 state.EntityManager.SetComponentData(e, new DamageConfig
                 {
                     ZombieTouchDamageToPlayer = 0,
-                    PlayerTouchDamageToZombie = 10, // можно включить "шипы" у игрока позже
+                    PlayerTouchDamageToZombie = 10, // включено для проверки убийств от контакта
                     ProjectileDamage = 10
                 });
             }
-        }
-
-        [BurstCompile]
-        public void OnUpdate(ref SystemState state)
-        {
-
         }
     }
 }

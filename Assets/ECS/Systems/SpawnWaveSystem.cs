@@ -8,7 +8,8 @@ using Unity.Transforms;
 namespace ECS.Systems
 {
     [BurstCompile]
-    [UpdateInGroup(typeof(SimulationSystemGroup))]
+    [UpdateInGroup(typeof(FixedStepSimulationSystemGroup))]
+    [UpdateBefore(typeof(DeathCleanupSystem))]
     public partial struct SpawnWaveSystem : ISystem
     {
         private EntityQuery _inactiveZombiesQ;
@@ -130,7 +131,6 @@ namespace ECS.Systems
                 // Активируем (disable InactiveTag)
                 inactive.ValueRW = false;
                 
-
                 remaining--;
             }
 
