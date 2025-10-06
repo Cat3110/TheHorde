@@ -24,6 +24,7 @@ namespace Utils
         private DamageStats _damage;
         private Health _health;
         private DeathStats _deaths;
+        private RenderStats _render;
         
         private EntityQuery _qTagCounters;
         private EntityQuery _qSpawnDebug;
@@ -31,6 +32,7 @@ namespace Utils
         private EntityQuery _qPlayerFull;
         private EntityQuery _qDamageStats;
         private EntityQuery _qDeathStats;
+        private EntityQuery _qRenderStats;
         private float3 _playerPos;
 
         void Awake()
@@ -44,7 +46,7 @@ namespace Utils
             _qPlayerFull  = _em.CreateEntityQuery(ComponentType.ReadOnly<PlayerTag>(), ComponentType.ReadOnly<Position>(), ComponentType.ReadOnly<Health>());
             _qDamageStats = _em.CreateEntityQuery(ComponentType.ReadOnly<DamageStats>());
             _qDeathStats = _em.CreateEntityQuery(ComponentType.ReadOnly<DeathStats>());
-            
+            _qRenderStats = _em.CreateEntityQuery(ComponentType.ReadOnly<RenderStats>());
         }
 
         void Update()
@@ -77,6 +79,9 @@ namespace Utils
 
                 if (!_qDeathStats.IsEmpty)
                     _deaths = _em.GetComponentData<DeathStats>(_qDeathStats.GetSingletonEntity());
+                
+                if (!_qRenderStats.IsEmpty)
+                    _render = _em.GetComponentData<RenderStats>(_qRenderStats.GetSingletonEntity());
             }
             
             // FPS (экспоненциальное сглаживание)
@@ -104,7 +109,9 @@ namespace Utils
                     $"({_steering.StandingRatio:P0})\n\n" +
                     $"DamageEvents/frame: {_damage.ProcessedThisFrame}" +
                     $"\nDeaths/frame: {_deaths.DeathsThisFrame}" +
-                    $"\nDeaths total: {_deaths.TotalDeaths}"
+                    $"\nDeaths total: {_deaths.TotalDeaths}" +
+                    $"\nBatches: {_render.BatchesThisFrame}" +
+                    $"\nInstances: {_render.InstancesThisFrame}"
                 );
                  
 

@@ -183,7 +183,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ECS.Authoring.SpawnWavesConfigAuthoring
   zombiesPerWave: 50
-  waveInterval: 2.5
+  waveInterval: 0.01
   spawnRadius: 18
   spawnJitter: 2
   spawnHealth: 10
@@ -217,12 +217,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 1045458216}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9134c49f1c8b452d9497b690266868bc, type: 3}
+  m_Script: {fileID: 11500000, guid: b3346d403f52408dbd1ccad259cfaafe, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ECS.Authoring.RenderResourcesAuthoring
-  InstancedMaterial: {fileID: 2100000, guid: 7fbbcf46778a04224a7dd4f611096c9c, type: 2}
-  PlayerMesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+  m_EditorClassIdentifier: Assembly-CSharp::ECS.Authoring.RenderBootstrapAuthoring
   ZombieMesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
+  PlayerMesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
+  ZombieMat: {fileID: 2100000, guid: 7fbbcf46778a04224a7dd4f611096c9c, type: 2}
+  PlayerMat: {fileID: 2100000, guid: 7fbbcf46778a04224a7dd4f611096c9c, type: 2}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

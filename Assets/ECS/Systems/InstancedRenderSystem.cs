@@ -1,4 +1,3 @@
-using ECS.Authoring;
 using ECS.Components;
 using Unity.Collections;
 using Unity.Entities;
@@ -6,119 +5,116 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 using UnityEngine.Rendering;
+using System.Collections.Generic;
 
 namespace ECS.Systems
 {
     [UpdateInGroup(typeof(PresentationSystemGroup))]
     public partial class InstancedRenderSystem : SystemBase
     {
-        // Персистентные буферы под матрицы (без GC)
-        private NativeList<Matrix4x4> _playerMatrices;
-        private NativeList<Matrix4x4> _zombieMatrices;
+        EntityQuery _zombiesQ;
+        EntityQuery _playersQ;
 
-        // MPB для цвета/параметров (по батчу)
-        private MaterialPropertyBlock _mpbPlayer;
-        private MaterialPropertyBlock _mpbZombie;
+        List<Matrix4x4> _matrices;
 
-        // Кэш ссылок на ресурсы (managed singleton)
-        private RenderResources _res;
-        // Переиспользуемый managed-буфер под DrawMeshInstanced
-        private Matrix4x4[] _batchBuffer;
-        
         protected override void OnCreate()
         {
-            RequireForUpdate<RenderResources>();   // ждём ресурсы
-            _playerMatrices = new NativeList<Matrix4x4>(Allocator.Persistent);
-            _zombieMatrices = new NativeList<Matrix4x4>(Allocator.Persistent);
+            RequireForUpdate<RenderConfig>();
+            _zombiesQ = SystemAPI.QueryBuilder()
+                .WithAll<LocalTransform, ZombieTag>()
+                .WithDisabled<InactiveTag>()
+                .Build();
 
-            _mpbPlayer = new MaterialPropertyBlock();
-            _mpbZombie = new MaterialPropertyBlock();
+            _playersQ = SystemAPI.QueryBuilder()
+                .WithAll<LocalTransform, PlayerTag>()
+                .Build();
 
-            // Цвета по умолчанию (URP/Lit: _BaseColor)
-            _mpbPlayer.SetColor("_BaseColor", new Color(0.2f, 0.6f, 1f, 1f));
-            _mpbZombie.SetColor("_BaseColor", new Color(0.9f, 0.3f, 0.3f, 1f));
-            _batchBuffer = new Matrix4x4[256]; // стартовый размер; будет расширяться по мере нужды
-        }
-        
-        protected override void OnUpdate()
-        {
-            if (_res == null)
+            // Синглтон для HUD
+            if (!SystemAPI.TryGetSingleton<RenderStats>(out _))
             {
-                _res = SystemAPI.ManagedAPI.GetSingleton<RenderResources>();
-                if (_res == null) return;
-                if (_res.InstancedMaterial != null && !_res.InstancedMaterial.enableInstancing)
-                    _res.InstancedMaterial.enableInstancing = true;
+                var e = EntityManager.CreateEntity();
+                EntityManager.AddComponentData(e, new RenderStats());
             }
 
-            _playerMatrices.Clear();
-            _zombieMatrices.Clear();
-
-            // Собираем матрицы трансформа (мейн-тред, без Burst, без GC)
-            foreach (var (ltw, _) in SystemAPI.Query<RefRO<LocalToWorld>, RefRO<PlayerTag>>())
-                _playerMatrices.Add(ltw.ValueRO.Value);
-
-            foreach (var (ltw, _) in SystemAPI.Query<RefRO<LocalToWorld>, RefRO<ZombieTag>>()
-                             .WithDisabled<InactiveTag>()) // рисуем только активных (InactiveTag выключен)
-            {
-                _zombieMatrices.Add(ltw.ValueRO.Value);
-            }
-
-            // Рисуем батчами ≤1023
-            DrawBatched(_res.PlayerMesh, _playerMatrices, _res.InstancedMaterial, _mpbPlayer, ref _batchBuffer);
-            DrawBatched(_res.ZombieMesh, _zombieMatrices, _res.InstancedMaterial, _mpbZombie, ref _batchBuffer);
-            
+            _matrices = new List<Matrix4x4>(1023);
         }
-        
+
         protected override void OnDestroy()
         {
-            if (_playerMatrices.IsCreated) _playerMatrices.Dispose();
-            if (_zombieMatrices.IsCreated) _zombieMatrices.Dispose();
-        }
-        
-        private static void EnsureCapacity(ref Matrix4x4[] buffer, int needed)
-        {
-            if (buffer != null && buffer.Length >= needed)
-                return;
-            int newLen = (buffer == null || buffer.Length == 0) ? 256 : buffer.Length;
-            while (newLen < needed) newLen *= 2;
-            System.Array.Resize(ref buffer, newLen); // редкая аллокация только при росте
         }
 
-        private static void DrawBatched(
-            Mesh mesh,
-            NativeList<Matrix4x4> matrices,
-            Material mat,
-            MaterialPropertyBlock mpb,
-            ref Matrix4x4[] batchBuffer)
+        protected override void OnUpdate()
         {
-            if (mesh == null || mat == null) return;
+            var cfg = SystemAPI.GetSingleton<RenderConfig>();
 
-            const int MaxPerBatch = 1023;
-            int total = matrices.Length;
-            if (total == 0) return;
+            var zombieMeshRef = SystemAPI.GetComponent<MeshRef>(cfg.ZombieMeshEntity).Value;
+            var playerMeshRef = SystemAPI.GetComponent<MeshRef>(cfg.PlayerMeshEntity).Value;
+            Mesh zombieMesh = zombieMeshRef.IsValid() ? zombieMeshRef.Value : null;
+            Mesh playerMesh = playerMeshRef.IsValid() ? playerMeshRef.Value : null;
 
-            int offset = 0;
-            var src = matrices.AsArray();
-            while (offset < total)
+            var zombieMatRef = SystemAPI.GetComponent<MaterialRef>(cfg.ZombieMatEntity).Value;
+            var playerMatRef = SystemAPI.GetComponent<MaterialRef>(cfg.PlayerMatEntity).Value;
+            Material zombieMat = zombieMatRef.IsValid() ? zombieMatRef.Value : null;
+            Material playerMat = playerMatRef.IsValid() ? playerMatRef.Value : null;
+
+            if (zombieMat != null && !zombieMat.enableInstancing) zombieMat.enableInstancing = true;
+            if (playerMat != null && !playerMat.enableInstancing) playerMat.enableInstancing = true;
+
+            int batches = 0, instances = 0;
+
+            // Зомби
+            batches += DrawGroup(_zombiesQ, zombieMesh, zombieMat, ref instances);
+
+            // Игрок (сферу тоже рисуем инстансом — единый путь)
+            batches += DrawGroup(_playersQ, playerMesh, playerMat, ref instances);
+
+            // Обновляем RenderStats для HUD
+            var statsEntity = SystemAPI.GetSingletonEntity<RenderStats>();
+            EntityManager.SetComponentData(statsEntity, new RenderStats
             {
-                int count = math.min(MaxPerBatch, total - offset);
-                EnsureCapacity(ref batchBuffer, count);
+                BatchesThisFrame = batches,
+                InstancesThisFrame = instances
+            });
+        }
 
-                // Копируем из NativeList в managed буфер
-                for (int i = 0; i < count; i++)
-                    batchBuffer[i] = src[offset + i];
+        int DrawGroup(EntityQuery q, Mesh mesh, Material mat, ref int instancesTotal)
+        {
+            if (mesh == null || mat == null) return 0;
 
-                Graphics.DrawMeshInstanced(
-                    mesh, 0, mat,
-                    batchBuffer, count,
-                    mpb,
-                    ShadowCastingMode.Off, receiveShadows: false,
-                    layer: 0, camera: null,
-                    LightProbeUsage.Off, lightProbeProxyVolume: null
-                );
+            var xforms = q.ToComponentDataArray<LocalTransform>(Allocator.Temp);
+            int count = xforms.Length;
+            if (count == 0) { xforms.Dispose(); return 0; }
 
-                offset += count;
+            int batches = 0;
+            _matrices.Clear();
+
+            // Пакуем по 1023
+            for (int i = 0; i < count; i++)
+            {
+                float3 pos = xforms[i].Position;
+                quaternion rot = xforms[i].Rotation;
+                float s = xforms[i].Scale;
+                _matrices.Add(Matrix4x4.TRS(pos, rot, new float3(s, s, s)));
+
+                if (_matrices.Count == 1023 || i == count - 1)
+                {
+                    Graphics.DrawMeshInstanced(
+                        mesh, 0, mat,
+                        _matrices,
+                        null,
+                        ShadowCastingMode.Off,
+                        false,
+                        0, null,
+                        LightProbeUsage.Off, null
+                    );
+                    batches++;
+                    instancesTotal += _matrices.Count;
+                    _matrices.Clear();
+                }
             }
+
+            xforms.Dispose();
+            return batches;
         }
     }
 }
