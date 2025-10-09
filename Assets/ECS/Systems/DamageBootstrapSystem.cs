@@ -26,7 +26,7 @@ namespace ECS.Systems
                 state.EntityManager.SetComponentData(e, new DamageConfig
                 {
                     ZombieTouchDamageToPlayer = 0,
-                    PlayerTouchDamageToZombie = 10, // включено для проверки убийств от контакта
+                    PlayerTouchDamageToZombie = 0, // включено для проверки убийств от контакта
                     ProjectileDamage = 10
                 });
             }

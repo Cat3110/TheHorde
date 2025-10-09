@@ -4,6 +4,7 @@ using Unity.Entities;
 using UnityEngine;
 using Unity.Mathematics;
 using ECS.Components;
+using Unity.Profiling;
 
 namespace Utils
 {
@@ -33,6 +34,10 @@ namespace Utils
         private EntityQuery _qDamageStats;
         private EntityQuery _qDeathStats;
         private EntityQuery _qRenderStats;
+        private EntityQuery _qSpawnConfig;
+        private EntityQuery _qSpawnState;
+        private SpawnWavesConfig _spawnCfg;
+        private SpawnWaveState _spawnState;
         private float3 _playerPos;
 
         void Awake()
@@ -47,12 +52,16 @@ namespace Utils
             _qDamageStats = _em.CreateEntityQuery(ComponentType.ReadOnly<DamageStats>());
             _qDeathStats = _em.CreateEntityQuery(ComponentType.ReadOnly<DeathStats>());
             _qRenderStats = _em.CreateEntityQuery(ComponentType.ReadOnly<RenderStats>());
+            _qSpawnConfig = _em.CreateEntityQuery(ComponentType.ReadOnly<SpawnWavesConfig>());
+            _qSpawnState  = _em.CreateEntityQuery(ComponentType.ReadOnly<SpawnWaveState>());
         }
 
         void Update()
         {
             if (label == null)
                 return;
+
+            PerformanceMonitor.Sample();
 
             if (Time.unscaledTime >= _nextRead)
             {
@@ -82,6 +91,12 @@ namespace Utils
                 
                 if (!_qRenderStats.IsEmpty)
                     _render = _em.GetComponentData<RenderStats>(_qRenderStats.GetSingletonEntity());
+                
+                if (!_qSpawnConfig.IsEmpty)
+                    _spawnCfg = _em.GetComponentData<SpawnWavesConfig>(_qSpawnConfig.GetSingletonEntity());
+
+                if (!_qSpawnState.IsEmpty)
+                    _spawnState = _em.GetComponentData<SpawnWaveState>(_qSpawnState.GetSingletonEntity());
             }
             
             // FPS (экспоненциальное сглаживание)
@@ -94,9 +109,27 @@ namespace Utils
             if (_timer >= 0.5f)
             {
                 float ticksPerSec = _ticks / _timer;
+
+            string envInfo;
+#if UNITY_WEBGL && UNITY_WEBGL_THREADS
+            envInfo = "WebGL: threads ON\n";
+#elif UNITY_WEBGL
+            envInfo = "WebGL: threads OFF\n";
+#else
+            envInfo = $"Platform: {Application.platform}\n";
+#endif
+
+            string seedInfo = (!_qSpawnState.IsEmpty) ? $"Seed (RngState): {_spawnState.RngState}\n" : string.Empty;
+
                 label.SetText(
                     $"{fps:0.} FPS ({ms:0.0} ms)\n" +
-                    $"{ticksPerSec:0.} FixedTicks/s\n\n" +
+                    $"{ticksPerSec:0.} FixedTicks/s\n" +
+                    $"CPU: {PerformanceMonitor.CpuMsAvg():0.00} ms (p95 {PerformanceMonitor.CpuMsP95():0.00})\n" +
+                    $"GPU: {PerformanceMonitor.GpuMsAvg():0.00} ms (p95 {PerformanceMonitor.GpuMsP95():0.00})\n" +
+                    $"Mem: {PerformanceMonitor.MemoryMB():0.0} MB\n\n" +
+                    $"Display Hz: {Screen.currentResolution.refreshRateRatio.value:0}\n" +
+                    $"targetFrameRate: {Application.targetFrameRate}\n" +
+                    $"vSyncCount: {QualitySettings.vSyncCount}\n\n" +
                     $"Players: {_last.Players}\n" +
                     $"Player Pos: {_playerPos.x:0.0}, {_playerPos.y:0.0}, {_playerPos.z:0.0}\n" +
                     $"Player HP: {_health.Value}\n" +
@@ -105,8 +138,9 @@ namespace Utils
                     $"Inactive: {_debug.InactiveZombies}\n" +
                     $"Wave: {_debug.WaveIndex}\n" +
                     $"Time to next: {_debug.TimeToNextWave}\n\n" +
-                    $"Standing: {_steering.StandingZombies} / {_steering.ActiveZombies} " +
-                    $"({_steering.StandingRatio:P0})\n\n" +
+                    $"Standing: {_steering.StandingZombies} / {_steering.ActiveZombies} (" +
+                    $"{_steering.StandingRatio:P0})\n\n" +
+                    $"{envInfo}{seedInfo}" +
                     $"DamageEvents/frame: {_damage.ProcessedThisFrame}" +
                     $"\nDeaths/frame: {_deaths.DeathsThisFrame}" +
                     $"\nDeaths total: {_deaths.TotalDeaths}" +

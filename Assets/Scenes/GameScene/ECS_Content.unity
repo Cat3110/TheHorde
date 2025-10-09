@@ -167,7 +167,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ECS.Authoring.SpawnPoolConfigAuthoring
   zombiePrefab: {fileID: 2327475779663991268, guid: e612d2916e83243648ef635dc369ae1e, type: 3}
-  initialCapacity: 200
+  initialCapacity: 800
   refillThreshold: 50
   refillCount: 50
 --- !u!114 &1045458219
@@ -182,8 +182,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4fcf3df360644e8990497b52e111cc8a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ECS.Authoring.SpawnWavesConfigAuthoring
-  zombiesPerWave: 50
-  waveInterval: 0.01
+  zombiesPerWave: 10
+  waveInterval: 0.5
   spawnRadius: 18
   spawnJitter: 2
   spawnHealth: 10
